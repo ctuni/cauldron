@@ -2,6 +2,7 @@ library(ggplot2)
 library(reshape2) 
 library(dplyr)
 library(tidyr)
+library(viridis)
 args <- commandArgs(trailingOnly = TRUE)
 
 # Read the column names from the text file
@@ -21,6 +22,10 @@ columns_to_keep <- unique(c(essential_columns, column_names))
 filtered_data <- data[, columns_to_keep]
 filtered_data_unique <- unique(filtered_data)
 
+#######
+# Median normalized by 0-1 range
+#######
+
 # Calculate the median value for each dataset across the columns
 median_data <- filtered_data_unique %>%
   group_by(dataset) %>%
@@ -28,27 +33,56 @@ median_data <- filtered_data_unique %>%
   pivot_longer(cols = -dataset, names_to = "metric", values_to = "value")
 
 # Normalize the value column within each metric
-median_data <- median_data %>%
+median_data_zero_one <- median_data %>%
   group_by(metric) %>%
   mutate(value_scaled = (value - min(value, na.rm = TRUE)) / 
            (max(value, na.rm = TRUE) - min(value, na.rm = TRUE)))
 
 # Reshape the data to wide format for plotting
-wide_data <- dcast(median_data, metric ~ dataset, value.var = "value_scaled")
+wide_data <- dcast(median_data_zero_one, metric ~ dataset, value.var = "value_scaled")
 
 # Creating the heatmap with scales normalized for each metric
 heatmap_plot <- ggplot(melt(wide_data), aes(x = variable, y = metric, fill = value)) + 
   geom_tile() + 
-  scale_fill_gradient(low = "blue", high = "red") +
+  scale_fill_viridis(name = "Scaled Value", option = "D") +
   theme_minimal() +
   labs(x = "Dataset", y = "Metric", fill = "Scaled Value")
 
 # Save the plot as a high-quality PNG file with rotated x-axis labels
-png("heatmap_plot.png", width = 2600, height = 1200, res = 300)
+png("heatmap_plot_range.png", width = 2600, height = 1200, res = 300)
 heatmap_plot <- heatmap_plot + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 print(heatmap_plot)
 dev.off()
+
+
+#####
+# Median normalized by z-score
+#####
+
+
+# Normalize the value column within each metric by the z-score
+median_data_z_score <- median_data %>%
+  group_by(metric) %>%
+  mutate(value_scaled = (value - mean(value, na.rm = TRUE)) / 
+           sd(value, na.rm = TRUE))
+
+# Reshape the data to wide format for plotting
+wide_data <- dcast(median_data_z_score, metric ~ dataset, value.var = "value_scaled")
+
+# Creating the heatmap plot object
+heatmap_plot <- ggplot(melt(wide_data), aes(x = variable, y = metric, fill = value)) + 
+  geom_tile() + 
+  scale_fill_viridis_c(name = "Z-Score", option = "D") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Dataset", y = "Metric")
+
+# Save the plot as a high-quality PNG file
+png("heatmap_plot_zscore.png", width = 2600, height = 1200, res = 300)
+print(heatmap_plot)
+dev.off()
+
 
 # # Reshape the dataframe to wide format for plotting
 # wide_data <- dcast(median_data, metric ~ dataset, value.var = "value")
