@@ -16,8 +16,12 @@ process_id() {
     # Execute fasterq-dump command with the current ID
     fasterq-dump -t /tmp/ -p -x "./$id"
 
+    # Gzip the files
+    gzip "./$id"_1.fastq
+    gzip "./$id"_2.fastq
+
     # Optional: Remove the downloaded SRA file if needed
-    rm "./$id"
+    rm -rf "./$id"
     rm "./$id"_1.fastq
     rm "./$id"_2.fastq
 
