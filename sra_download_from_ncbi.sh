@@ -25,6 +25,20 @@ process_id() {
     rm "./$id"_1.fastq
     rm "./$id"_2.fastq
 
+    # Check integrity of gzipped files
+    if gzip -t "$id"_1.fastq.gz; then
+        echo "First mate of $id is okay"
+        if gzip -t "$id"_2.fastq.gz; then
+            echo "Second mate of $id is okay"
+        else
+            echo "Second mate $id is not okay" >> acc_list_failed
+        fi
+    else
+        echo "First mate $id is not okay" >> acc_list_failed
+    fi
+    
+
+
     echo "Processed ID: $id"
 }
 
