@@ -25,8 +25,8 @@ for filename in os.listdir(input_directory):
     if filename.endswith(("_1.fastq.gz", "_2.fastq.gz", "_R1.fastq.gz", "_R2.fastq.gz")):
         # Extract sample name and read type
         parts = filename.split("_")
-        sample_name = f"sub_{parts[1]}"
-        read_type = parts[2].split(".")[0]
+        sample_name = f"{parts[0]}"
+        read_type = parts[1].split(".")[0]
         fastq_file = filename
         
         # Check if the sample name already exists in the dictionary
